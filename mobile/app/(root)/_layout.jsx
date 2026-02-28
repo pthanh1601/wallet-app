@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../constants/colors";
 import * as SplashScreen from "expo-splash-screen";
 import AnimatedSplashScreen from "../../components/AnimatedSplashScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Giữ màn hình chờ (Native Splash) cho đến khi App sẵn sàng
 SplashScreen.preventAutoHideAsync();
@@ -30,6 +31,21 @@ export default function Layout() {
     isAuthenticatingRef.current = true;
 
     try {
+      // Kiểm tra lại phần cứng và cài đặt của người dùng
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      const savedSetting = await AsyncStorage.getItem("user-faceid-enabled");
+      const isEnabled = savedSetting === null ? true : savedSetting === "true";
+
+      const shouldAuthenticate = hasHardware && isEnrolled && isEnabled;
+      setHasBiometrics(shouldAuthenticate);
+
+      if (!shouldAuthenticate) {
+        setIsUnlocked(true);
+        isAuthenticatingRef.current = false;
+        return;
+      }
+
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: "Mở khóa ví của bạn",
         disableDeviceFallback: false,
@@ -63,6 +79,8 @@ export default function Layout() {
         setIsUnlocked(true);
       }
     })();
+    // Gọi hàm authenticate, hàm này đã bao gồm logic kiểm tra phần cứng và cài đặt
+    authenticate();
   }, [isLoaded, isSignedIn]);
 
   // 3. Lắng nghe trạng thái Background/Foreground

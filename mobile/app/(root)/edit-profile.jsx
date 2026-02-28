@@ -14,7 +14,6 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "../../constants/colors";
-// Import style dùng chung từ màn hình Create
 import { styles } from "../../assets/styles/create.styles";
 
 export default function EditProfileScreen() {
@@ -52,10 +51,10 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim()) {
-      Alert.alert("Error", "Please enter your first and last name.");
-      return;
-    }
+    // if (!firstName.trim() || !lastName.trim()) {
+    //   Alert.alert("Error", "Please enter your first and last name.");
+    //   return;
+    // }
 
     setIsLoading(true);
     try {
@@ -148,6 +147,7 @@ export default function EditProfileScreen() {
               placeholder="Last Name"
               placeholderTextColor={COLORS.textLight}
               value={lastName}
+              onChangeText={setLastName}
             />
           </View>
 
