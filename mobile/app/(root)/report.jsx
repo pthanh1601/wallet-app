@@ -44,10 +44,16 @@ export default function ReportScreen() {
   };
 
   // Tính toán dữ liệu chi tiêu theo danh mục
-  const categoryStats = useMemo(() => {
-    const expenses = transactions.filter((t) => parseFloat(t.amount) < 0);
-    const totalExpense = Math.abs(parseFloat(summary.expenses)) || 1; // Tránh chia cho 0
-
+  // const categoryStats = useMemo(() => {
+  //   const expenses = transactions.filter((t) => parseFloat(t.amount) < 0);
+  //   const totalExpense = Math.abs(parseFloat(summary.expenses)) || 1; // Tránh chia cho 0
+const categoryStats = useMemo(() => {
+    // Kiểm tra an toàn để tránh lỗi "filter of undefined"
+    const validTransactions = Array.isArray(transactions) ? transactions : [];
+    const expenses = validTransactions.filter((t) => parseFloat(t.amount || 0) < 0);
+    
+    // Kiểm tra an toàn cho summary
+    const totalExpense = Math.abs(parseFloat(summary?.expenses || 0)) || 1;
     const stats = {};
 
     expenses.forEach((t) => {

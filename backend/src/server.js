@@ -4,6 +4,7 @@ import { initDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 
 import transactionsRoute from "./routes/transactionsRoute.js";
+import chatRoute from "./routes/chatRoute.js";
 import job from "./config/cron.js";
 
 dotenv.config();
@@ -14,7 +15,7 @@ if (process.env.NODE_ENV === "production") job.start();
 
 // middleware
 app.use(rateLimiter);
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // Tăng giới hạn nhận JSON lên 10MB
 
 // our custom simple middleware
 // app.use((req, res, next) => {
@@ -29,6 +30,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/transactions", transactionsRoute);
+app.use("/api/chat", chatRoute);
 
 initDB().then(() => {
   app.listen(PORT, () => {
