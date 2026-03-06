@@ -20,9 +20,11 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { COLORS } from "../../constants/colors";
 import { API_URL } from "../../constants/api";
 import SafeScreen from "../../components/SafeScreen";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ChatAIScreen() {
   const { user } = useUser();
+  const { i18n } = useLanguage();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef(null);
@@ -32,7 +34,7 @@ export default function ChatAIScreen() {
   const [messages, setMessages] = useState([
     {
       id: "1",
-      text: `Xin chào ${user?.firstName || "bạn"}! Tôi là trợ lý tài chính AI. Tôi có thể giúp gì cho bạn hôm nay?`,
+      text: i18n.chat_ai_greeting.replace("{name}", user?.firstName || "bạn"),
       sender: "ai",
       timestamp: new Date(),
     },
@@ -80,7 +82,16 @@ export default function ChatAIScreen() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+      } else {
+        // Nếu server trả về HTML (lỗi 404/500), đọc text để debug thay vì crash
+        const text = await response.text();
+        console.error("Chat API Error (Non-JSON response):", text);
+        throw new Error("Server returned invalid format (HTML instead of JSON)");
+      }
 
       const aiResponse = {
         id: (Date.now() + 1).toString(),
@@ -142,8 +153,8 @@ export default function ChatAIScreen() {
         <View style={styles.container}>
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Chat AI</Text>
-            <Text style={styles.headerSubtitle}>Trợ lý tài chính thông minh</Text>
+            <Text style={styles.headerTitle}>{i18n.tab_chat}</Text>
+            <Text style={styles.headerSubtitle}>{i18n.chat_subtitle}</Text>
           </View>
 
           {/* MESSAGE LIST */}
@@ -159,7 +170,7 @@ export default function ChatAIScreen() {
               isLoading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color={COLORS.primary} />
-                  <Text style={styles.loadingText}>AI đang trả lời...</Text>
+                  <Text style={styles.loadingText}>{i18n.chat_loading}</Text>
                 </View>
               ) : null
             }
@@ -168,7 +179,7 @@ export default function ChatAIScreen() {
           {/* SUGGESTIONS (Chỉ hiện khi ít tin nhắn) */}
           {messages.length < 3 && !isLoading && (
             <View style={styles.suggestionsContainer}>
-              <Text style={styles.suggestionTitle}>Gợi ý câu hỏi:</Text>
+              <Text style={styles.suggestionTitle}>{i18n.chat_suggestion_title}</Text>
               <View style={styles.suggestionList}>
                 {suggestions.map((s, index) => (
                   <TouchableOpacity
@@ -188,7 +199,7 @@ export default function ChatAIScreen() {
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="Hỏi tôi về tài chính của bạn..."
+                placeholder={i18n.chat_placeholder}
                 placeholderTextColor={COLORS.textLight}
                 value={inputText}
                 onChangeText={setInputText}

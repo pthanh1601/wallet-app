@@ -6,6 +6,7 @@ import { COLORS } from "../../constants/colors";
 import SafeScreen from "../../components/SafeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 // Component hiển thị từng dòng cài đặt
 const SettingItem = ({ icon, title, subtitle, onPress, type = "link", value, onValueChange, color = COLORS.text }) => (
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const { i18n, language, changeLanguage } = useLanguage();
   
   // State giả lập cho các nút toggle
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(true);
@@ -47,8 +49,16 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Đăng xuất", style: "destructive", onPress: () => signOut() },
+      { text: i18n.cancel, style: "cancel" },
+      { text: i18n.logout, style: "destructive", onPress: () => signOut() },
+    ]);
+  };
+
+  const handleChangeLanguage = () => {
+    Alert.alert(i18n.language, i18n.select_language, [
+      { text: "English", onPress: () => changeLanguage("en") },
+      { text: "Tiếng Việt", onPress: () => changeLanguage("vi") },
+      { text: i18n.cancel, style: "cancel" }
     ]);
   };
 
@@ -70,18 +80,18 @@ export default function ProfileScreen() {
 
         {/* SECTION: TÀI KHOẢN */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Tài khoản</Text>
+          <Text style={styles.sectionHeader}>{i18n.account}</Text>
           <View style={styles.sectionContent}>
             <SettingItem 
               icon="person-outline" 
-              title="Thông tin cá nhân" 
+              title={i18n.personal_info} 
               color={COLORS.primary} 
               onPress={() => router.push("/edit-profile")} 
             />
             <View style={styles.separator} />
             <SettingItem 
               icon="scan-outline" 
-              title="Đăng nhập FaceID" 
+              title={i18n.face_id} 
               type="toggle" 
               value={isBiometricEnabled} 
               onValueChange={setIsBiometricEnabled} 
@@ -92,39 +102,45 @@ export default function ProfileScreen() {
 
         {/* SECTION: CÀI ĐẶT CHUNG */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Cài đặt chung</Text>
+          <Text style={styles.sectionHeader}>{i18n.general}</Text>
           <View style={styles.sectionContent}>
-            <SettingItem icon="notifications-outline" title="Thông báo" color="#F59E0B" onPress={() => {}} />
+            <SettingItem icon="notifications-outline" title={i18n.notifications} color="#F59E0B" onPress={() => {}} />
             <View style={styles.separator} />
             <SettingItem 
               icon="moon-outline" 
-              title="Chế độ tối" 
+              title={i18n.dark_mode} 
               type="toggle" 
               value={isDarkMode} 
               onValueChange={setIsDarkMode} 
               color="#6366F1"
             />
             <View style={styles.separator} />
-            <SettingItem icon="language-outline" title="Ngôn ngữ" subtitle="Tiếng Việt" color="#10B981" onPress={() => {}} />
+            <SettingItem 
+              icon="language-outline" 
+              title={i18n.language} 
+              subtitle={language === 'vi' ? "Tiếng Việt" : "English"} 
+              color="#10B981" 
+              onPress={handleChangeLanguage} 
+            />
           </View>
         </View>
 
         {/* SECTION: KHÁC */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Hỗ trợ</Text>
+          <Text style={styles.sectionHeader}>{i18n.support}</Text>
           <View style={styles.sectionContent}>
-            <SettingItem icon="help-circle-outline" title="Trung tâm trợ giúp" color="#3B82F6" onPress={() => {}} />
+            <SettingItem icon="help-circle-outline" title={i18n.help_center} color="#3B82F6" onPress={() => {}} />
             <View style={styles.separator} />
-            <SettingItem icon="shield-checkmark-outline" title="Chính sách bảo mật" color="#8B5CF6" onPress={() => {}} />
+            <SettingItem icon="shield-checkmark-outline" title={i18n.privacy_policy} color="#8B5CF6" onPress={() => {}} />
           </View>
         </View>
 
         {/* LOGOUT BUTTON */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Đăng xuất</Text>
+          <Text style={styles.logoutText}>{i18n.logout}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>Phiên bản 1.0.0</Text>
+        <Text style={styles.versionText}>{i18n.version} 1.0.0</Text>
         <View style={{ height: 40 }} /> 
       </ScrollView>
     </SafeScreen>

@@ -20,8 +20,13 @@ export const useTransactions = (userId) => {
   const fetchTransactions = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/transactions/${userId}`);
-      const data = await response.json();
-      setTransactions(data);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        setTransactions(data);
+      } else {
+        console.error("Error fetching transactions: Server returned non-JSON response", await response.text());
+      }
     } catch (error) {
       console.error("Error fetching transactions:", error);
     }
@@ -30,8 +35,13 @@ export const useTransactions = (userId) => {
   const fetchSummary = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/transactions/summary/${userId}`);
-      const data = await response.json();
-      setSummary(data);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        setSummary(data);
+      } else {
+        console.error("Error fetching summary: Server returned non-JSON response", await response.text());
+      }
     } catch (error) {
       console.error("Error fetching summary:", error);
     }

@@ -8,6 +8,7 @@ import { COLORS } from "../../constants/colors";
 import * as SplashScreen from "expo-splash-screen";
 import AnimatedSplashScreen from "../../components/AnimatedSplashScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LanguageProvider, useLanguage } from "../context/LanguageContext";
 
 // Giữ màn hình chờ (Native Splash) cho đến khi App sẵn sàng
 SplashScreen.preventAutoHideAsync();
@@ -146,6 +147,16 @@ export default function Layout() {
 
   // 6. Giao diện chính của ứng dụng
   return (
+    <LanguageProvider>
+      <RootTabs />
+    </LanguageProvider>
+  );
+}
+
+// Tách Tabs ra component con để có thể dùng useLanguage (vì phải nằm trong Provider)
+function RootTabs() {
+  const { i18n } = useLanguage();
+  return (
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -165,11 +176,11 @@ export default function Layout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Trang chủ", tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }} />
-      <Tabs.Screen name="calendar" options={{ title: "Lịch", tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} /> }} />
-      <Tabs.Screen name="report" options={{ title: "Báo cáo", tabBarIcon: ({ color, size }) => <Ionicons name="pie-chart" size={size} color={color} /> }} />
-      <Tabs.Screen name="chatai" options={{ title: "Chat AI", tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile", tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} /> }} />
+      <Tabs.Screen name="index" options={{ title: i18n.tab_home, tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }} />
+      <Tabs.Screen name="calendar" options={{ title: i18n.tab_calendar, tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} /> }} />
+      <Tabs.Screen name="report" options={{ title: i18n.tab_report, tabBarIcon: ({ color, size }) => <Ionicons name="pie-chart" size={size} color={color} /> }} />
+      <Tabs.Screen name="chatai" options={{ title: i18n.tab_chat, tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} /> }} />
+      <Tabs.Screen name="profile" options={{ title: i18n.tab_profile, tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} /> }} />
       <Tabs.Screen name="create" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen
         name="edit-profile"
