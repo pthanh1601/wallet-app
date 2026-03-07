@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useUser } from "@clerk/clerk-expo";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "../../constants/colors";
@@ -10,8 +10,9 @@ import SafeScreen from "../../components/SafeScreen";
 import { useTransactions } from "../../hooks/useTransactions";
 import { TransactionItem } from "../../components/TransactionItem";
 import { useFocusEffect } from "expo-router";
+import { useLanguage } from "../context/LanguageContext";
 
-// Cấu hình lịch (nếu muốn tiếng Việt thì bỏ comment phần dưới)
+// --- 1. Cấu hình Locale tập trung ---
 LocaleConfig.locales['vi'] = {
   monthNames: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
   monthNamesShort: ['Th.1','Th.2','Th.3','Th.4','Th.5','Th.6','Th.7','Th.8','Th.9','Th.10','Th.11','Th.12'],
@@ -19,10 +20,20 @@ LocaleConfig.locales['vi'] = {
   dayNamesShort: ['CN','T2','T3','T4','T5','T6','T7'],
   today: "Hôm nay"
 };
-LocaleConfig.defaultLocale = 'vi';
 
-// Helper format tiền gọn (ví dụ: 1000 -> 1k) để vừa ô lịch
+LocaleConfig.locales['en'] = {
+  monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+  monthNamesShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  dayNames: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  dayNamesShort: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  today: "Today"
+};
+
+// Thiết lập mặc định để tránh lỗi 'undefined' khi khởi tạo
+LocaleConfig.defaultLocale = 'en';
+
 const formatCompactNumber = (number) => {
+  if (!number) return "0";
   if (number >= 1000000) return (number / 1000000).toFixed(1) + "M";
   if (number >= 1000) return (number / 1000).toFixed(0) + "k";
   return number.toFixed(0);
@@ -30,44 +41,55 @@ const formatCompactNumber = (number) => {
 
 export default function CalendarScreen() {
   const { user } = useUser();
-  const { transactions, loadData, deleteTransaction } = useTransactions(user.id);
+  const { transactions, loadData, deleteTransaction } = useTransactions(user?.id);
+  const { i18n, language } = useLanguage();
   
-  // Mặc định chọn ngày hôm nay
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
   const [selectedDate, setSelectedDate] = useState(today);
+
+  // --- 2. Xử lý đổi ngôn ngữ an toàn ---
+  useEffect(() => {
+    // Chỉ set khi language có giá trị hợp lệ
+    if (language && LocaleConfig.locales[language]) {
+      LocaleConfig.defaultLocale = language;
+    } else {
+      LocaleConfig.defaultLocale = 'en';
+    }
+  }, [language]);
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData])
+      if (user?.id) loadData();
+    }, [loadData, user?.id])
   );
 
-  // 1. Nhóm giao dịch theo ngày
   const dailyData = useMemo(() => {
     const data = {};
+    const validTransactions = Array.isArray(transactions) ? transactions : [];
     
-    transactions.forEach((t) => {
-      // Giả sử created_at là chuỗi ISO hoặc Date object
-      const dateKey = t.created_at.split("T")[0]; // Lấy phần YYYY-MM-DD
+    validTransactions.forEach((t) => {
+      if (!t.created_at) return;
+      const dateKey = t.created_at.split("T")[0];
       
       if (!data[dateKey]) {
         data[dateKey] = { income: 0, expense: 0, items: [] };
       }
 
-      const amount = parseFloat(t.amount);
+      const amount = parseFloat(t.amount || 0);
       if (amount > 0) {
         data[dateKey].income += amount;
       } else {
         data[dateKey].expense += Math.abs(amount);
       }
-      
       data[dateKey].items.push(t);
     });
     return data;
   }, [transactions]);
 
-  // 2. Component hiển thị từng ngày trên lịch
-  const renderDay = ({ date, state }) => {
+  // --- 3. Render Day với kiểm tra an toàn ---
+  const renderDay = useCallback(({ date, state }) => {
+    if (!date) return null;
+    
     const dateStr = date.dateString;
     const dayData = dailyData[dateStr];
     const isSelected = dateStr === selectedDate;
@@ -90,28 +112,31 @@ export default function CalendarScreen() {
           {date.day}
         </Text>
         
-        {/* Hiển thị chấm thu/chi hoặc số tiền nhỏ */}
         <View style={styles.dotContainer}>
           {dayData?.income > 0 && (
-            <Text style={styles.incomeText}>+{formatCompactNumber(dayData.income)}</Text>
+            <Text style={styles.incomeText} numberOfLines={1}>
+              +{formatCompactNumber(dayData.income)}
+            </Text>
           )}
           {dayData?.expense > 0 && (
-            <Text style={styles.expenseText}>-{formatCompactNumber(dayData.expense)}</Text>
+            <Text style={styles.expenseText} numberOfLines={1}>
+              -{formatCompactNumber(dayData.expense)}
+            </Text>
           )}
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [dailyData, selectedDate, today]);
 
-  // Lấy danh sách giao dịch của ngày đang chọn
   const selectedTransactions = dailyData[selectedDate]?.items || [];
 
   return (
     <SafeScreen>
       <View style={styles.container}>
-        {/* CALENDAR */}
         <View style={styles.calendarWrapper}>
+          {/* Calendar có Key để buộc re-render khi ngôn ngữ thay đổi */}
           <Calendar
+            key={`calendar-${language}`} 
             current={today}
             dayComponent={renderDay}
             theme={{
@@ -126,14 +151,12 @@ export default function CalendarScreen() {
           />
         </View>
 
-        {/* TRANSACTION LIST HEADER */}
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>
-            Transactions for {format(new Date(selectedDate), "MMM dd, yyyy")}
+            {i18n.transactions_for || "Transactions for"} {selectedDate}
           </Text>
         </View>
 
-        {/* LIST */}
         <FlatList
           data={selectedTransactions}
           keyExtractor={(item) => item.id.toString()}
@@ -143,7 +166,7 @@ export default function CalendarScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No transactions on this day</Text>
+              <Text style={styles.emptyText}>{i18n.no_transactions_day}</Text>
             </View>
           }
         />
@@ -154,37 +177,25 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F4F7" },
-  
   calendarWrapper: {
     backgroundColor: "#FFF",
     borderRadius: 20,
     margin: 16,
     paddingBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
     elevation: 3,
   },
-
-  // Day Component Styles
-  dayContainer: { alignItems: "center", justifyContent: "flex-start", width: 48, height: 48, borderRadius: 12, paddingTop: 6 },
+  dayContainer: { alignItems: "center", width: 45, height: 50, borderRadius: 10, paddingTop: 4 },
   selectedDayContainer: { backgroundColor: COLORS.primary },
   todayContainer: { borderWidth: 1, borderColor: COLORS.primary },
-  
   dayText: { fontSize: 14, fontWeight: "600", color: COLORS.text },
   selectedDayText: { color: "#FFF" },
   disabledText: { color: "#D1D5DB" },
-
-  dotContainer: { marginTop: 2, alignItems: 'center' },
-  incomeText: { fontSize: 8, color: COLORS.income, fontWeight: "700" },
-  expenseText: { fontSize: 8, color: COLORS.expense, fontWeight: "700" },
-
-  // List Styles
+  dotContainer: { marginTop: 1, alignItems: 'center' },
+  incomeText: { fontSize: 7, color: "#22C55E", fontWeight: "700" },
+  expenseText: { fontSize: 7, color: "#EF4444", fontWeight: "700" },
   listHeader: { paddingHorizontal: 20, marginBottom: 10 },
   listTitle: { fontSize: 16, fontWeight: "bold", color: COLORS.text },
   listContent: { paddingHorizontal: 16, paddingBottom: 20 },
-  
   emptyState: { alignItems: "center", marginTop: 40 },
   emptyText: { color: COLORS.textLight, fontSize: 14 },
 });

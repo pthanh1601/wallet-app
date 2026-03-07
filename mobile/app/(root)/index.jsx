@@ -11,6 +11,7 @@ import { BalanceCard } from "../../components/BalanceCard";
 import { TransactionItem } from "../../components/TransactionItem";
 import NoTransactionsFound from "../../components/NoTransactionsFound";
 import { COLORS } from "../../constants/colors";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Page() {
   const { user } = useUser();
@@ -18,6 +19,7 @@ export default function Page() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // 1. State lưu từ khóa tìm kiếm
 
+  const { i18n } = useLanguage();
   const { transactions, summary, isLoading, loadData, deleteTransaction } = useTransactions(
     user.id
   );
@@ -41,9 +43,9 @@ const filteredTransactions = Array.isArray(transactions)
   : [];
 
   const handleDelete = (id) => {
-    Alert.alert("Delete Transaction", "Are you sure you want to delete this transaction?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteTransaction(id) },
+    Alert.alert(i18n.delete_confirm_title, i18n.delete_confirm_msg, [
+      { text: i18n.cancel, style: "cancel" },
+      { text: i18n.delete, style: "destructive", onPress: () => deleteTransaction(id) },
     ]);
   };
 
@@ -62,7 +64,7 @@ const filteredTransactions = Array.isArray(transactions)
               resizeMode="contain"
             />
             <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeText}>Welcome,</Text>
+              <Text style={styles.welcomeText}>{i18n.welcome},</Text>
               <Text style={styles.usernameText}>
                 {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : user?.emailAddresses[0]?.emailAddress.split("@")[0]}
               </Text>
@@ -72,13 +74,13 @@ const filteredTransactions = Array.isArray(transactions)
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.addButton} onPress={() => router.push("/create")}>
               <Ionicons name="add" size={20} color="#FFF" />
-              <Text style={styles.addButtonText}>Add</Text>
+              <Text style={styles.addButtonText}>{i18n.add}</Text>
             </TouchableOpacity>
             <SignOutButton />
           </View>
         </View>
 
-        <BalanceCard summary={summary} />
+        <BalanceCard summary={summary} i18n={i18n} />
 
         {/* 3. Giao diện thanh tìm kiếm */}
         <View style={{ 
@@ -96,7 +98,7 @@ const filteredTransactions = Array.isArray(transactions)
           <Ionicons name="search" size={20} color={COLORS.textLight} />
           <TextInput 
             style={{ flex: 1, marginLeft: 10, fontSize: 16, color: COLORS.text }}
-            placeholder="Search transactions..."
+            placeholder={i18n.search_placeholder}
             placeholderTextColor={COLORS.textLight}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -109,7 +111,7 @@ const filteredTransactions = Array.isArray(transactions)
         </View>
 
         <View style={styles.transactionsHeaderContainer}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <Text style={styles.sectionTitle}>{i18n.recent_transactions}</Text>
         </View>
       </View>
 
@@ -119,7 +121,7 @@ const filteredTransactions = Array.isArray(transactions)
         style={styles.transactionsList}
         contentContainerStyle={styles.transactionsListContent}
         data={filteredTransactions} // 4. Truyền danh sách đã lọc vào đây
-        renderItem={({ item }) => <TransactionItem item={item} onDelete={handleDelete} />}
+        renderItem={({ item }) => <TransactionItem item={item} onDelete={handleDelete} i18n={i18n} />}
         ListEmptyComponent={<NoTransactionsFound />}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

@@ -14,21 +14,23 @@ import { API_URL } from "../../constants/api";
 import { styles } from "../../assets/styles/create.styles";
 import { COLORS } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import { useLanguage } from "../context/LanguageContext";
 
 const CATEGORIES = [
-  { id: "food", name: "Food & Drinks", icon: "fast-food" },
-  { id: "shopping", name: "Shopping", icon: "cart" },
-  { id: "transportation", name: "Transportation", icon: "car" },
-  { id: "entertainment", name: "Entertainment", icon: "film" },
-  { id: "bills", name: "Bills", icon: "receipt" },
-  { id: "income", name: "Income", icon: "cash" },
-  { id: "other", name: "Other", icon: "ellipsis-horizontal" },
+  { id: "food", name: "Food & Drinks", icon: "fast-food", i18nKey: "cat_food" },
+  { id: "shopping", name: "Shopping", icon: "cart", i18nKey: "cat_shopping" },
+  { id: "transportation", name: "Transportation", icon: "car", i18nKey: "cat_transport" },
+  { id: "entertainment", name: "Entertainment", icon: "film", i18nKey: "cat_entertainment" },
+  { id: "bills", name: "Bills", icon: "receipt", i18nKey: "cat_bills" },
+  { id: "income", name: "Income", icon: "cash", i18nKey: "cat_income" },
+  { id: "other", name: "Other", icon: "ellipsis-horizontal", i18nKey: "cat_other" },
 ];
 
 const CreateScreen = () => {
   const router = useRouter();
   const { user } = useUser();
   const params = useLocalSearchParams();
+  const { i18n } = useLanguage();
   const isEditing = !!params.id;
 
   const [title, setTitle] = useState("");
@@ -49,13 +51,13 @@ const CreateScreen = () => {
 
   const handleCreate = async () => {
     // validations
-    if (!title.trim()) return Alert.alert("Error", "Please enter a transaction title");
+    if (!title.trim()) return Alert.alert(i18n.error, i18n.enter_title);
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      Alert.alert("Error", "Please enter a valid amount");
+      Alert.alert(i18n.error, i18n.enter_amount);
       return;
     }
 
-    if (!selectedCategory) return Alert.alert("Error", "Please select a category");
+    if (!selectedCategory) return Alert.alert(i18n.error, i18n.select_category);
 
     setIsLoading(true);
     try {
@@ -91,10 +93,13 @@ const CreateScreen = () => {
         }
       }
 
-      Alert.alert("Success", `Transaction ${isEditing ? "updated" : "created"} successfully`);
+      Alert.alert(
+        i18n.success,
+        isEditing ? i18n.transaction_updated_successfully : i18n.transaction_created_successfully
+      );
       router.back();
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to create transaction");
+      Alert.alert(i18n.error, error.message || i18n.transaction_failed);
       console.error("Error creating transaction:", error);
     } finally {
       setIsLoading(false);
@@ -108,13 +113,15 @@ const CreateScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEditing ? "Edit Transaction" : "New Transaction"}</Text>
+        <Text style={styles.headerTitle}>
+          {isEditing ? i18n.edit_transaction : i18n.new_transaction}
+        </Text>
         <TouchableOpacity
           style={[styles.saveButtonContainer, isLoading && styles.saveButtonDisabled]}
           onPress={handleCreate}
           disabled={isLoading}
         >
-          <Text style={styles.saveButton}>{isLoading ? "Saving..." : isEditing ? "Update" : "Save"}</Text>
+          <Text style={styles.saveButton}>{isLoading ? i18n.saving : isEditing ? i18n.update : i18n.save}</Text>
           {!isLoading && <Ionicons name="checkmark" size={18} color={COLORS.primary} />}
         </TouchableOpacity>
       </View>
@@ -133,7 +140,7 @@ const CreateScreen = () => {
               style={styles.typeIcon}
             />
             <Text style={[styles.typeButtonText, isExpense && styles.typeButtonTextActive]}>
-              Expense
+              {i18n.expense}
             </Text>
           </TouchableOpacity>
 
@@ -149,7 +156,7 @@ const CreateScreen = () => {
               style={styles.typeIcon}
             />
             <Text style={[styles.typeButtonText, !isExpense && styles.typeButtonTextActive]}>
-              Income
+              {i18n.income}
             </Text>
           </TouchableOpacity>
         </View>
@@ -177,7 +184,7 @@ const CreateScreen = () => {
           />
           <TextInput
             style={styles.input}
-            placeholder="Transaction Title"
+            placeholder={i18n.transaction_title}
             placeholderTextColor={COLORS.textLight}
             value={title}
             onChangeText={setTitle}
@@ -186,7 +193,7 @@ const CreateScreen = () => {
 
         {/* TITLE */}
         <Text style={styles.sectionTitle}>
-          <Ionicons name="pricetag-outline" size={16} color={COLORS.text} /> Category
+          <Ionicons name="pricetag-outline" size={16} color={COLORS.text} /> {i18n.category}
         </Text>
 
         <View style={styles.categoryGrid}>
@@ -211,7 +218,7 @@ const CreateScreen = () => {
                   selectedCategory === category.name && styles.categoryButtonTextActive,
                 ]}
               >
-                {category.name}
+                {i18n[category.i18nKey]}
               </Text>
             </TouchableOpacity>
           ))}

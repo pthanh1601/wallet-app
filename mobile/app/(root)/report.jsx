@@ -8,6 +8,7 @@ import { PieChart } from "react-native-gifted-charts";
 import { COLORS } from "../../constants/colors";
 import SafeScreen from "../../components/SafeScreen";
 import { useTransactions } from "../../hooks/useTransactions";
+import { useLanguage } from "../context/LanguageContext";
 
 // Helper để lấy màu và icon cho từng danh mục
 const getCategoryConfig = (categoryName) => {
@@ -26,6 +27,7 @@ const getCategoryConfig = (categoryName) => {
 export default function ReportScreen() {
   const { user } = useUser();
   const { transactions, summary, isLoading, loadData } = useTransactions(user.id);
+  const { i18n } = useLanguage();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -47,11 +49,11 @@ export default function ReportScreen() {
   // const categoryStats = useMemo(() => {
   //   const expenses = transactions.filter((t) => parseFloat(t.amount) < 0);
   //   const totalExpense = Math.abs(parseFloat(summary.expenses)) || 1; // Tránh chia cho 0
-const categoryStats = useMemo(() => {
+  const categoryStats = useMemo(() => {
     // Kiểm tra an toàn để tránh lỗi "filter of undefined"
     const validTransactions = Array.isArray(transactions) ? transactions : [];
     const expenses = validTransactions.filter((t) => parseFloat(t.amount || 0) < 0);
-    
+
     // Kiểm tra an toàn cho summary
     const totalExpense = Math.abs(parseFloat(summary?.expenses || 0)) || 1;
     const stats = {};
@@ -105,8 +107,8 @@ const categoryStats = useMemo(() => {
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Financial Report</Text>
-          <Text style={styles.headerSubtitle}>Overview of your finances</Text>
+          <Text style={styles.headerTitle}>{i18n.financial_report}</Text>
+          <Text style={styles.headerSubtitle}>{i18n.overview}</Text>
         </View>
 
         {/* SUMMARY CARDS */}
@@ -115,7 +117,7 @@ const categoryStats = useMemo(() => {
             <View style={[styles.iconCircle, { backgroundColor: "#22C55E" }]}>
               <Ionicons name="arrow-down" size={18} color="#FFF" />
             </View>
-            <Text style={styles.summaryLabel}>Income</Text>
+            <Text style={styles.summaryLabel}>{i18n.income}</Text>
             <Text style={[styles.summaryAmount, { color: "#15803D" }]}>
               ${parseFloat(summary.income).toFixed(2)}
             </Text>
@@ -125,7 +127,7 @@ const categoryStats = useMemo(() => {
             <View style={[styles.iconCircle, { backgroundColor: "#EF4444" }]}>
               <Ionicons name="arrow-up" size={18} color="#FFF" />
             </View>
-            <Text style={styles.summaryLabel}>Expense</Text>
+            <Text style={styles.summaryLabel}>{i18n.expense}</Text>
             <Text style={[styles.summaryAmount, { color: "#B91C1C" }]}>
               ${Math.abs(parseFloat(summary.expenses)).toFixed(2)}
             </Text>
@@ -134,13 +136,13 @@ const categoryStats = useMemo(() => {
 
         {/* NET BALANCE */}
         <View style={styles.balanceBlock}>
-          <Text style={styles.balanceLabel}>Net Balance</Text>
+          <Text style={styles.balanceLabel}>{i18n.net_balance}</Text>
           <Text style={styles.balanceValue}>${parseFloat(summary.balance).toFixed(2)}</Text>
         </View>
 
         {/* CHART SECTION */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Expense Analysis</Text>
+          <Text style={styles.sectionTitle}>{i18n.expense_analysis}</Text>
           {pieData.length > 0 ? (
             <View style={styles.chartContainer}>
               <PieChart
@@ -160,7 +162,7 @@ const categoryStats = useMemo(() => {
                         ${(selectedCategory ? selectedCategory.amount : Math.abs(parseFloat(summary.expenses))).toFixed(0)}
                       </Text>
                       <Text style={{ fontSize: 14, color: COLORS.textLight }}>
-                        {selectedCategory ? selectedCategory.name : "Total"}
+                        {selectedCategory ? selectedCategory.name : i18n.total}
                       </Text>
                     </View>
                   );
@@ -172,11 +174,11 @@ const categoryStats = useMemo(() => {
 
         {/* SPENDING BREAKDOWN */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Spending Breakdown</Text>
-          
+          <Text style={styles.sectionTitle}>{i18n.spending_breakdown}</Text>
+
           {categoryStats.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No expenses recorded yet.</Text>
+              <Text style={styles.emptyText}>{i18n.no_expenses}</Text>
             </View>
           ) : (
             <View style={styles.listContainer}>
@@ -196,11 +198,11 @@ const categoryStats = useMemo(() => {
                   </View>
                   {/* Progress Bar */}
                   <View style={styles.progressBarBg}>
-                    <View 
+                    <View
                       style={[
-                        styles.progressBarFill, 
+                        styles.progressBarFill,
                         { width: `${item.percentage}%`, backgroundColor: item.color }
-                      ]} 
+                      ]}
                     />
                   </View>
                 </View>
@@ -208,7 +210,7 @@ const categoryStats = useMemo(() => {
             </View>
           )}
         </View>
-        
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeScreen>
@@ -217,7 +219,7 @@ const categoryStats = useMemo(() => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F4F7", paddingHorizontal: 20 },
-  
+
   header: { marginTop: 20, marginBottom: 20 },
   headerTitle: { fontSize: 28, fontWeight: "bold", color: COLORS.text },
   headerSubtitle: { fontSize: 14, color: COLORS.textLight, marginTop: 5 },
@@ -247,14 +249,14 @@ const styles = StyleSheet.create({
 
   section: { marginBottom: 20 },
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: COLORS.text, marginBottom: 15 },
-  
+
   listContainer: { backgroundColor: "#FFF", borderRadius: 20, padding: 20 },
   categoryItem: { marginBottom: 20 },
   categoryHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   categoryLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   categoryIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   categoryName: { fontSize: 15, fontWeight: "600", color: COLORS.text },
-  
+
   categoryRight: { alignItems: "flex-end" },
   categoryAmount: { fontSize: 15, fontWeight: "bold", color: COLORS.text },
   categoryPercent: { fontSize: 12, color: COLORS.textLight },

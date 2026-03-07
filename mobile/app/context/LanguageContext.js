@@ -49,6 +49,9 @@ export const translations = {
     logout_confirm_msg: "Are you sure you want to logout?",
     cancel: "Cancel",
     version: "Version",
+    delete: "Delete",
+    delete_confirm_title: "Delete Transaction",
+    delete_confirm_msg: "Are you sure you want to delete this transaction?",
     
     // Chat AI
     chat_subtitle: "Smart financial assistant",
@@ -70,6 +73,9 @@ export const translations = {
     enter_title: "Please enter a transaction title",
     enter_amount: "Please enter a valid amount",
     select_category: "Please select a category",
+    transaction_updated_successfully: "Transaction updated successfully",
+    transaction_created_successfully: "Transaction created successfully",
+    transaction_failed: "Failed to create/update transaction",
     
     // Categories
     cat_food: "Food & Drinks",
@@ -126,6 +132,9 @@ export const translations = {
     logout_confirm_msg: "Bạn có chắc chắn muốn đăng xuất?",
     cancel: "Hủy",
     version: "Phiên bản",
+    delete: "Xóa",
+    delete_confirm_title: "Xóa giao dịch",
+    delete_confirm_msg: "Bạn có chắc chắn muốn xóa giao dịch này?",
     
     // Chat AI
     chat_subtitle: "Trợ lý tài chính thông minh",
@@ -147,6 +156,9 @@ export const translations = {
     enter_title: "Vui lòng nhập tên giao dịch",
     enter_amount: "Vui lòng nhập số tiền hợp lệ",
     select_category: "Vui lòng chọn danh mục",
+    transaction_updated_successfully: "Cập nhật giao dịch thành công",
+    transaction_created_successfully: "Tạo giao dịch thành công",
+    transaction_failed: "Tạo/cập nhật giao dịch thất bại",
     
     // Categories
     cat_food: "Ăn uống",
